@@ -1,0 +1,340 @@
+システム仕様書
+
+たびスポ 全国版
+
+Version 2.0 — 2026年4月改訂
+
+バージョン
+
+v2.0
+
+2026年4月改訂
+
+追加機能
+
+3件
+
+SNS・SEO・年払い
+
+追加画面
+
+2画面
+
+S-05・X-01
+
+DBカラム
+
++13件
+
+SNS/SEO/年払い
+
+
+
+【v2.0 更新内容】① 月払い・年払いの料金体系追加（スタンダード¥2,500/月〜年払い）　② 店舗SNS設定8種（Instagram/X/TikTok/Facebook/YouTube/LINE/公式サイト/Google ビジネス）　③ 店舗SEO設定（タイトル/メタ説明/ハッシュタグ/Googleプレビュー）　④ SEO戦略4層（技術・コンテンツ・SNS連携・計測）　⑤ 画面追加（S-05 SNS/SEO設定、X-01 SEO戦略）
+
+
+
+
+1. サービス概要
+
+
+
+
+1.1 目的
+
+旅行者が訪問先で周辺スポットを3D地図で発見・お気に入り保存でき、地域の店舗・施設が月額¥3,000〜（年払い¥2,500〜）で全国の旅行者に情報を発信できる全国版タウンマップWebアプリケーション。v2.0ではSNS連携設定とSEO設定機能を店舗管理画面に追加。
+
+
+
+
+1.2 琴平版→全国版→v2.0 変更履歴
+バージョン
+変更内容
+主な追加機能
+琴平版（初期）
+香川県琴平町限定
+MapLibre地図・スポット表示
+全国版 v1.0
+全国47都道府県対応
+旅行者アカウント・お気に入り・Stripe課金
+v2.0（本版）
+機能強化
+年払い・SNS設定8種・SEO設定・構造化データ
+
+
+
+
+1.3 技術スタック（v2.0）
+レイヤー
+技術
+変更点
+フロント
+Next.js 14 App Router + TypeScript
+変更なし
+地図
+MapLibre GL JS + OpenFreeMap
+変更なし（API費用¥0継続）
+DB
+Supabase PostgreSQL
+spots/shopsテーブルにSNS・SEOカラム追加
+認証
+Supabase Auth（メール/Google/Apple）
+変更なし
+決済
+Stripe
+月払い+年払い 計4 Priceオブジェクト追加
+メール
+Resend
+変更なし
+SEO
+JSON-LD構造化データ（LocalBusiness）
+v2.0新規追加
+ホスティング
+Vercel
+変更なし
+
+
+
+
+
+
+2. データベース設計（v2.0 追加分）
+
+
+
+
+2.1 spots テーブル v2.0 追加カラム
+カラム名
+型
+説明
+追加バージョン
+instagram_url
+text
+Instagram プロフィールURL
+v2.0
+twitter_url
+text
+X（旧Twitter）プロフィールURL
+v2.0
+tiktok_url
+text
+TikTok プロフィールURL
+v2.0
+facebook_url
+text
+Facebook ページURL
+v2.0
+youtube_url
+text
+YouTube チャンネルURL
+v2.0
+line_url
+text
+LINE 公式アカウントURL
+v2.0
+website_url
+text
+公式ウェブサイトURL
+v2.0
+google_business_url
+text
+Google ビジネスプロフィールURL
+v2.0
+seo_title
+text
+SEOタイトル（60文字以内推奨）
+v2.0
+meta_description
+text
+メタディスクリプション（160文字以内推奨）
+v2.0
+hashtags
+text[]
+ハッシュタグ配列（例: {#琴平,#香川観光}）
+v2.0
+
+
+
+
+2.2 shops テーブル v2.0 追加カラム
+カラム名
+型
+説明
+追加バージョン
+billing_cycle
+text
+monthly / annual（年払い）
+v2.0
+current_period_end
+timestamptz
+現在の契約期間終了日
+v2.0
+
+
+
+
+2.3 マイグレーション SQL（v2.0）
+
+-- supabase/migrations/003_v2_sns_seo.sql
+
+ALTER TABLE spots ADD COLUMN IF NOT EXISTS
+
+  instagram_url text, twitter_url text, tiktok_url text,
+
+  facebook_url text, youtube_url text, line_url text,
+
+  website_url text, google_business_url text,
+
+  seo_title text, meta_description text,
+
+  hashtags text[] DEFAULT &apos;{}&apos;;
+
+
+
+ALTER TABLE shops
+
+  ADD COLUMN IF NOT EXISTS billing_cycle text DEFAULT &apos;monthly&apos;
+
+    CHECK (billing_cycle IN (&apos;monthly&apos;,&apos;annual&apos;)),
+
+  ADD COLUMN IF NOT EXISTS current_period_end timestamptz;
+
+
+
+
+
+
+3. 画面一覧（v2.0 更新版）
+
+
+画面ID
+画面名
+URL
+v2.0変更
+P-01
+地図（トップ）
+/
+変更なし
+P-02
+スポット詳細
+/spots/[id]
+SNSリンク表示・ハッシュタグ追加
+P-03
+掲載申込
+/apply
+変更なし
+P-04
+旅行者ログイン
+/login
+変更なし
+P-05
+旅行者新規登録
+/register
+変更なし
+P-06
+お気に入り一覧
+/favorites
+変更なし
+P-07
+申込完了
+/apply/complete
+変更なし
+P-08
+エラーページ
+/error
+変更なし
+S-01
+店舗ログイン
+/admin/login
+変更なし
+S-02
+店舗ダッシュボード
+/admin/dashboard
+SEOプレビュー追加
+S-03
+スポット情報編集
+/admin/dashboard/spot/[id]
+変更なし
+S-04
+料金プラン
+/admin/dashboard/upgrade
+月払い/年払いトグル追加（v2.0）
+S-05
+SNS・SEO設定（新規）
+/admin/settings
+3タブ: SNS/SEO/アカウント（v2.0新規）
+A-01
+申込審査
+/admin/applications
+変更なし
+A-02
+スポット管理
+/admin/spots
+変更なし
+A-03
+管理者ダッシュボード
+/admin/overview
+変更なし
+X-01
+SEO戦略（設計資料）
+—
+v2.0新規追加
+
+
+
+
+
+
+4. SEO仕様（v2.0 新規）
+
+
+
+
+4.1 技術的SEO
+
+
+generateMetadata: スポット詳細の title/description/og:image を動的生成
+
+
+JSON-LD 構造化データ（LocalBusiness / TouristAttraction）をスポット詳細ページに埋め込み
+
+
+sitemap.ts: 全activeスポットのURLを自動生成・毎日ISR再生成
+
+
+robots.ts: /admin/* を noindex/nofollow 設定
+
+
+next/image: 全画像をWebP変換・LCP最適化
+
+
+
+
+4.2 コンテンツSEO
+
+
+スポットURL改善: /spots/[id] → 将来的に /spots/[pref]/[city]/[slug] へ
+
+
+地域×カテゴリランディングページ（例: /area/kagawa/gourmet）をSSGで自動生成
+
+
+ハッシュタグをOGPタグ・構造化データのkeywords フィールドに反映
+
+
+
+
+4.3 SNS連携SEO
+
+
+Twitter Cards / OGP 完全対応でSNSシェア時のプレビューを最適化
+
+
+店舗SNSリンクをスポット詳細ページに掲載 → SNS流入をサービスに取り込む
+
+
+Google ビジネスプロフィールURL連携で地図SEO強化
+
+
+
+— 以上（システム仕様書 v2.0）—

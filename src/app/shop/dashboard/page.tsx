@@ -27,6 +27,18 @@ export default async function ShopDashboardPage() {
   const plan = (shop?.plan ?? 'free') as keyof typeof PLANS
   const badge = PLAN_BADGE[plan]
 
+  let favoritesCount = 0
+  let checkInsCount = 0
+
+  if (spot) {
+    const [{ count: fCount }, { count: cCount }] = await Promise.all([
+      supabase.from('favorites').select('*', { count: 'exact', head: true }).eq('spot_id', spot.id),
+      supabase.from('check_ins').select('*', { count: 'exact', head: true }).eq('spot_id', spot.id)
+    ])
+    favoritesCount = fCount ?? 0
+    checkInsCount = cCount ?? 0
+  }
+
   return (
     <div className="min-h-dvh" style={{ background: '#f5f0e8' }}>
       <div style={{ height:3, background:'linear-gradient(90deg,#7a4e20,#e8c860,#c4a240,#e8c860,#7a4e20)' }} />
@@ -79,16 +91,49 @@ export default async function ShopDashboardPage() {
           )}
         </section>
 
+        {/* 分析データ（モック） */}
+        <section className="bg-white rounded-2xl shadow-sm overflow-hidden mb-4">
+          <div className="px-5 py-3" style={{ background:'rgba(139,94,60,0.06)', borderBottom:'1px solid #f0e8d8' }}>
+            <p className="text-xs font-semibold" style={{ color:'#8b5e3c' }}>アクセス・集客状況 (今月)</p>
+          </div>
+          <div className="p-5 grid grid-cols-3 gap-4 text-center divide-x divide-stone-100">
+            <div>
+              <p className="text-xs text-stone-500 mb-1">閲覧数</p>
+              <p className="text-2xl font-bold text-stone-800">1,248</p>
+              <p className="text-[10px] text-emerald-600 mt-1">↑ 12%</p>
+            </div>
+            <div>
+              <p className="text-xs text-stone-500 mb-1">お気に入り</p>
+              <p className="text-2xl font-bold text-stone-800">{favoritesCount}</p>
+              <p className="text-[10px] text-stone-400 mt-1">-</p>
+            </div>
+            <div>
+              <p className="text-xs text-stone-500 mb-1">チェックイン</p>
+              <p className="text-2xl font-bold text-stone-800">{checkInsCount}</p>
+              <p className="text-[10px] text-stone-400 mt-1">-</p>
+            </div>
+          </div>
+          <div className="px-5 py-3 text-xs bg-stone-50 text-stone-500 text-center border-t border-stone-100">
+            ※ プレミアムプランでは詳細な流入元分析が表示されます
+          </div>
+        </section>
+
         {/* スポット情報 */}
         <section className="bg-white rounded-2xl shadow-sm overflow-hidden">
           <div className="px-5 py-3 flex items-center justify-between"
             style={{ background:'rgba(139,94,60,0.06)', borderBottom:'1px solid #f0e8d8' }}>
             <p className="text-xs font-semibold" style={{ color:'#8b5e3c' }}>掲載スポット情報</p>
             {spot && (
-              <Link href={`/shop/dashboard/spot/${spot.id}`}
-                className="text-xs font-bold" style={{ color:'#8b5e3c' }}>
-                スポット情報を編集 →
-              </Link>
+              <div className="flex items-center gap-3">
+                <Link href="/shop/dashboard/settings"
+                  className="text-[11px] font-bold px-2.5 py-1 rounded-md" style={{ background: '#f5f0e8', color: '#8b5e3c' }}>
+                  SNS・SEO・アカウント設定
+                </Link>
+                <Link href={`/shop/dashboard/spot/${spot.id}`}
+                  className="text-[11px] font-bold px-2.5 py-1 rounded-md" style={{ background: '#f5f0e8', color: '#8b5e3c' }}>
+                  基本情報を編集 →
+                </Link>
+              </div>
             )}
           </div>
           {spot ? (

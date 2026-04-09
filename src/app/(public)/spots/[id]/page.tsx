@@ -4,6 +4,7 @@ import Image from 'next/image'
 import type { Metadata } from 'next'
 import { createClient } from '@/lib/supabase/server'
 import type { Spot } from '@/types/spot'
+import SpotActions from '@/components/SpotActions'
 
 interface Props {
   params: Promise<{ id: string }>
@@ -15,35 +16,38 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
   const { data: spot } = await supabase
     .from('spots')
-    .select('name, pr, sub, image_url, category')
+    .select('name, pr, sub, image_url, category, seo_title, meta_description, hashtags')
     .eq('id', id)
     .eq('is_active', true)
-    .single<Pick<Spot, 'name' | 'pr' | 'sub' | 'image_url' | 'category'>>()
+    .single<Partial<Spot>>()
 
   if (!spot) return {}
 
-  const description = spot.pr
+  const description = spot.meta_description
+    ? spot.meta_description
+    : spot.pr
+
     ? `${spot.pr}`.slice(0, 120)
     : spot.sub
       ? `${spot.sub} — 香川県琴平町`
-      : `${spot.name}の詳細情報 — こんぴらタウンMAP`
+      : `${spot.name}の詳細情報 — 旅スポ`
 
   const ogImage = spot.image_url
     ? { url: spot.image_url, width: 1200, height: 630, alt: spot.name }
     : { url: '/og-image.png',  width: 1200, height: 630 }
 
   return {
-    title:       spot.name,
+    title:       spot.seo_title || spot.name,
     description,
     openGraph: {
-      title:       spot.name,
+      title:       spot.seo_title || spot.name,
       description,
       images:      [ogImage],
       type:        'article',
       locale:      'ja_JP',
-      siteName:    'こんぴらタウンMAP',
+      siteName:    '旅スポ',
     },
-    twitter: { card: 'summary_large_image', title: spot.name, description },
+    twitter: { card: 'summary_large_image', title: spot.seo_title || spot.name, description },
   }
 }
 
@@ -60,8 +64,37 @@ export default async function SpotDetailPage({ params }: Props) {
 
   if (!spot) notFound()
 
+  const SNS_LINKS = [
+    { url: spot.instagram_url, icon: '📸' },
+    { url: spot.twitter_url, icon: '𝕏' },
+    { url: spot.tiktok_url, icon: '▶' },
+    { url: spot.facebook_url, icon: '📘' },
+    { url: spot.youtube_url, icon: '📺' },
+    { url: spot.line_url, icon: '💬' },
+    { url: spot.website_url, icon: '🌐' },
+    { url: spot.google_business_url, icon: '🗺' },
+  ].filter(l => l.url)
+
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@type': ['LocalBusiness', 'TouristAttraction'],
+    name: spot.name,
+    image: spot.image_url,
+    description: spot.meta_description || spot.pr || spot.sub,
+    address: {
+      '@type': 'PostalAddress',
+      addressLocality: '香川県',
+      streetAddress: spot.area,
+    },
+    sameAs: SNS_LINKS.map(l => l.url)
+  }
+
   return (
     <div className="min-h-dvh bg-gray-50">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
       {/* ヘッダー */}
       <header className="sticky top-0 z-10 flex items-center gap-3 px-4 py-3 bg-white border-b shadow-sm">
         <Link
@@ -121,7 +154,19 @@ export default async function SpotDetailPage({ params }: Props) {
           {spot.pr && (
             <p className="text-sm text-gray-700 mt-2 leading-relaxed">{spot.pr}</p>
           )}
+          {spot.hashtags && spot.hashtags.length > 0 && (
+            <div className="flex flex-wrap gap-1.5 mt-3 pt-3 border-t border-gray-100">
+              {spot.hashtags.map(tag => (
+                <span key={tag} className="text-[11px] font-semibold text-[#8b5e3c] bg-[#f0e8d8] px-2 py-0.5 rounded-md shadow-sm">
+                  {tag}
+                </span>
+              ))}
+            </div>
+          )}
         </div>
+
+        {/* アクションボタン (お気に入り, チェックイン) */}
+        <SpotActions spotId={spot.id} />
 
         {/* 基本情報 */}
         <div className="bg-white rounded-2xl p-4 shadow-sm space-y-3">
@@ -130,6 +175,20 @@ export default async function SpotDetailPage({ params }: Props) {
           <InfoRow label="定休日" value={spot.closed} />
           <InfoRow label="エリア" value={spot.area} />
         </div>
+
+        {/* 公式SNS・リンク */}
+        {SNS_LINKS.length > 0 && (
+          <div className="bg-white rounded-2xl p-4 shadow-sm space-y-4">
+            <h3 className="text-sm font-bold text-gray-800 border-b pb-2">公式リンク・SNS</h3>
+            <div className="flex gap-4 flex-wrap">
+              {SNS_LINKS.map(l => (
+                <a key={l.icon} href={l.url!} target="_blank" rel="noopener noreferrer" className="text-3xl hover:scale-110 transition-transform">
+                  {l.icon}
+                </a>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Googleマップリンク */}
         <a

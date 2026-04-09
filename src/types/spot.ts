@@ -17,6 +17,19 @@ export interface Spot {
   tag: string | null
   is_active: boolean
   created_at: string
+
+  // v2 fields
+  instagram_url?: string | null
+  twitter_url?: string | null
+  tiktok_url?: string | null
+  facebook_url?: string | null
+  youtube_url?: string | null
+  line_url?: string | null
+  website_url?: string | null
+  google_business_url?: string | null
+  seo_title?: string | null
+  meta_description?: string | null
+  hashtags?: string[] | null
 }
 
 export interface Shop {
@@ -27,4 +40,8 @@ export interface Shop {
   stripe_customer_id: string | null
   stripe_subscription_id: string | null
   spot_id: string | null
+  
+  // v2 fields
+  billing_cycle?: 'monthly' | 'annual'
+  current_period_end?: string | null
 }

@@ -74,7 +74,7 @@ export default function ApplyPage() {
         style={{ background: 'linear-gradient(135deg,#1c1006,#3c220c)' }}>
         <div className="flex items-center gap-2">
           <span className="text-lg">⛩️</span>
-          <span className="font-bold text-sm" style={{ color: '#c4a870' }}>こんぴらタウンMAP</span>
+          <span className="font-bold text-sm" style={{ color: '#c4a870' }}>旅スポ</span>
         </div>
         <Link href="/" className="text-xs" style={{ color: 'rgba(196,168,112,0.7)' }}>← マップを見る</Link>
       </header>
@@ -84,7 +84,7 @@ export default function ApplyPage() {
           <p className="text-2xl mb-1">📋</p>
           <h1 className="text-xl font-bold" style={{ color: '#1c1006' }}>掲載申込フォーム</h1>
           <p className="text-sm mt-1" style={{ color: '#6b7280' }}>
-            こんぴらタウンMAPへの掲載をご希望の方はこちらからお申し込みください
+            旅スポへの掲載をご希望の方はこちらからお申し込みください
           </p>
         </div>
 
@@ -194,7 +194,7 @@ function CompletePage({ shopName, email }: { shopName: string; email: string }) 
       <header className="px-4 py-3 flex items-center gap-2"
         style={{ background: 'linear-gradient(135deg,#1c1006,#3c220c)' }}>
         <span className="text-lg">⛩️</span>
-        <span className="font-bold text-sm" style={{ color: '#c4a870' }}>こんぴらタウンMAP</span>
+        <span className="font-bold text-sm" style={{ color: '#c4a870' }}>旅スポ</span>
       </header>
 
       <div className="flex-1 flex items-center justify-center p-6">

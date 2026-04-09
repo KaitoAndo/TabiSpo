@@ -29,7 +29,7 @@ export default function AdminLoginPage() {
         <div className="text-center mb-8">
           <span className="text-4xl">🏯</span>
           <h1 className="mt-3 text-xl font-bold" style={{ color:'#c4a870' }}>運営管理者ポータル</h1>
-          <p className="text-sm mt-1" style={{ color:'rgba(196,168,112,0.5)' }}>こんぴらタウンMAP</p>
+          <p className="text-sm mt-1" style={{ color:'rgba(196,168,112,0.5)' }}>旅スポ</p>
         </div>
         <div className="bg-white rounded-2xl shadow-2xl p-6 space-y-4">
           <form onSubmit={handleSubmit} className="space-y-4">

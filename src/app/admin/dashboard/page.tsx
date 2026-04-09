@@ -8,18 +8,33 @@ export default async function AdminDashboardPage() {
   if (!user || user.email !== process.env.ADMIN_EMAIL) redirect('/admin/login')
 
   // 統計データ取得
-  const [{ count: totalSpots }, { count: activeSpots }, { count: totalShops }, { data: planStats }] =
+  const [{ count: totalSpots }, { count: activeSpots }, { count: totalShops }, { data: planStats }, { data: pendingSpotsData }] =
     await Promise.all([
       supabase.from('spots').select('*', { count:'exact', head:true }),
       supabase.from('spots').select('*', { count:'exact', head:true }).eq('is_active', true),
       supabase.from('shops').select('*', { count:'exact', head:true }),
       supabase.from('spots').select('plan').eq('is_active', true),
+      supabase.from('spots').select('id, name, created_at').eq('is_active', false).order('created_at', { ascending: false })
     ])
 
   const plans = (planStats ?? []) as { plan: string }[]
   const premiumCount  = plans.filter(p => p.plan === 'premium').length
   const standardCount = plans.filter(p => p.plan === 'standard').length
   const freeCount     = plans.filter(p => p.plan === 'free').length
+  const pendingSpots  = pendingSpotsData ?? []
+
+  // ── 承認用 Server Action ──
+  async function approveSpot(formData: FormData) {
+    'use server'
+    const spotId = formData.get('spotId') as string
+    if (!spotId) return
+    const supabaseServer = await createClient()
+    await supabaseServer.from('spots').update({ is_active: true }).eq('id', spotId)
+    
+    // Server functions can't import revalidatePath dynamically in the middle sometimes, better to import at top. Wait, let's just do it directly.
+    const { revalidatePath } = await import('next/cache')
+    revalidatePath('/admin/dashboard')
+  }
 
   return (
     <div className="min-h-dvh" style={{ background:'#f5f0e8' }}>
@@ -82,10 +97,51 @@ export default async function AdminDashboardPage() {
           </div>
         </section>
 
+        {/* タスク・アクションモック */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <section className="bg-white rounded-2xl shadow-sm overflow-hidden flex flex-col">
+            <SectionTitle>🚨 未処理の店舗申請</SectionTitle>
+            <div className="p-4 flex flex-col gap-3 flex-1">
+              {pendingSpots.length === 0 ? (
+                <p className="text-xs text-stone-500 my-auto text-center">現在、未処理の申請はありません</p>
+              ) : (
+                pendingSpots.map(spot => (
+                  <div key={spot.id} className="flex items-center justify-between text-sm border-b border-stone-50 pb-2 last:border-0 last:pb-0">
+                    <div>
+                      <p className="font-bold text-stone-900 line-clamp-1">{spot.name}</p>
+                      <p className="text-[10px] text-stone-500">{new Date(spot.created_at).toLocaleDateString('ja-JP')} 登録</p>
+                    </div>
+                    <form action={approveSpot}>
+                      <input type="hidden" name="spotId" value={spot.id} />
+                      <button className="px-3 py-1 bg-stone-100 rounded-lg font-medium text-amber-700 hover:bg-amber-100 transition-colors text-xs">
+                        承認する
+                      </button>
+                    </form>
+                  </div>
+                ))
+              )}
+            </div>
+          </section>
+          
+          <section className="bg-white rounded-2xl shadow-sm overflow-hidden">
+            <SectionTitle>⚠️ 通報・モデレーション</SectionTitle>
+            <div className="p-4 flex flex-col gap-3">
+              <div className="flex items-center justify-between text-sm border-b border-stone-50 pb-2">
+                <div>
+                  <p className="font-bold text-stone-900">不適切なレビュー報告 1件</p>
+                  <p className="text-xs text-stone-500">おがわうどん</p>
+                </div>
+                <button className="text-xs text-red-600 font-bold">確認</button>
+              </div>
+            </div>
+          </section>
+        </div>
+
         {/* クイックリンク */}
         <div className="grid grid-cols-2 gap-3">
           <NavCard href="/admin/spots" icon="📋" title="スポット管理" desc="一覧・編集・公開切替" />
           <NavCard href="/admin/shops" icon="🏪" title="店舗アカウント管理" desc="プラン・連絡先の確認" />
+          <NavCard href="/admin/cms" icon="📰" title="コンテンツ管理 (CMS)" desc="お知らせ・特集の編集" />
         </div>
       </div>
     </div>

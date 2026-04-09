@@ -1,0 +1,659 @@
+多言語対応 仕様書
+
+たびスポ v2.1 — Multilingual Support
+
+日本語 / English / 中文（简体・繁體）/ 한국어
+
+対応言語数
+
+5言語
+
+ja/en/zh-CN/zh-TW/ko
+
+翻訳方式
+
+DeepL API
+
+PR文自動翻訳 無料50万字/月
+
+実装ライブラリ
+
+next-intl
+
+URL-based routing
+
+追加月額費用
+
+¥0〜
+
+DeepL Free枠内
+
+Version 2.1 / 2026年4月
+
+
+
+
+1. 対応言語と方針
+
+
+言語コード
+言語
+URLプレフィックス
+翻訳方針
+対象訪日観光客
+ja
+日本語（デフォルト）
+/ja/ または /
+DB登録値をそのまま表示
+国内旅行者
+en
+English
+/en/
+DeepL自動翻訳 + 運営者確認
+欧米・東南アジア系訪日客
+zh-CN
+中文（简体）
+/zh-CN/
+DeepL自動翻訳
+中国本土からの訪日客
+zh-TW
+中文（繁體）
+/zh-TW/
+DeepL自動翻訳
+台湾・香港からの訪日客
+ko
+한국어
+/ko/
+DeepL自動翻訳
+韓国からの訪日客（最大市場）
+
+
+
+訪日外客の上位5市場（2023年）: 韓国・中国・台湾・米国・香港。これら5言語でJNTO統計の外客約80%をカバー。
+
+
+
+
+
+
+2. 技術実装（next-intl）
+
+
+
+
+2.1 ライブラリ・構成
+項目
+内容
+ライブラリ
+next-intl（v3.x）
+ルーティング
+URL-based: /en/spots/[id], /zh-CN/spots/[id]
+言語検出
+middleware.tsでAccept-Languageを解析 → 適切なロケールへリダイレクト
+フォールバック
+未翻訳キーは自動的に日本語（ja）にフォールバック
+翻訳ファイル
+messages/ja.json, messages/en.json, messages/zh-CN.json 等
+クライアント切替
+ヘッダーの言語ピッカーからsetLocale()でクッキー保存
+
+
+
+
+2.2 ファイル構成
+
+src/
+
+├── i18n/
+
+│   ├── routing.ts          # ロケール定義
+
+│   └── request.ts          # next-intl 設定
+
+├── messages/
+
+│   ├── ja.json             # 日本語（マスター）
+
+│   ├── en.json             # 英語
+
+│   ├── zh-CN.json          # 中国語簡体字
+
+│   ├── zh-TW.json          # 中国語繁体字
+
+│   └── ko.json             # 韓国語
+
+└── app/
+
+    └── [locale]/           # ロケール別ルート
+
+        ├── page.tsx        # / (トップ)
+
+        └── spots/[id]/page.tsx
+
+
+
+
+2.3 routing.ts の定義
+
+// src/i18n/routing.ts
+
+import { defineRouting } from &apos;next-intl/routing&apos;
+
+
+
+export const routing = defineRouting({
+
+  locales: [&apos;ja&apos;, &apos;en&apos;, &apos;zh-CN&apos;, &apos;zh-TW&apos;, &apos;ko&apos;],
+
+  defaultLocale: &apos;ja&apos;,
+
+  localeDetection: true,  // Accept-Language 自動検出
+
+})
+
+
+
+
+2.4 middleware.ts の更新
+
+import createMiddleware from &apos;next-intl/middleware&apos;
+
+import { routing } from &apos;./i18n/routing&apos;
+
+import { createServerClient } from &apos;@supabase/ssr&apos;
+
+
+
+export default createMiddleware(routing)
+
+
+
+export const config = {
+
+  matcher: [&apos;/((?!api|_next|_vercel|.*\\..*).*)&apos;],
+
+}
+
+
+
+
+
+
+3. 翻訳ファイル仕様
+
+
+
+
+3.1 messages/ja.json（マスター）
+
+{
+
+  &quot;app&quot;: {
+
+    &quot;name&quot;: &quot;たびスポ&quot;,
+
+    &quot;tagline&quot;: &quot;全国タウンマップ&quot;,
+
+    &quot;slogan&quot;: &quot;旅先で見つける、地元のいい店&quot;
+
+  },
+
+  &quot;nav&quot;: {
+
+    &quot;login&quot;: &quot;ログイン&quot;,
+
+    &quot;favorites&quot;: &quot;お気に入り&quot;,
+
+    &quot;apply&quot;: &quot;掲載申込&quot;
+
+  },
+
+  &quot;categories&quot;: {
+
+    &quot;all&quot;: &quot;すべて&quot;,
+
+    &quot;sight&quot;: &quot;観光&quot;,
+
+    &quot;food&quot;: &quot;飲食&quot;,
+
+    &quot;sweet&quot;: &quot;スイーツ&quot;,
+
+    &quot;exp&quot;: &quot;体験&quot;,
+
+    &quot;souvenir&quot;: &quot;お土産&quot;,
+
+    &quot;sake&quot;: &quot;酒蔵&quot;,
+
+    &quot;onsen&quot;: &quot;温泉・宿&quot;
+
+  },
+
+  &quot;spot&quot;: {
+
+    &quot;hours&quot;: &quot;営業時間&quot;,
+
+    &quot;closed&quot;: &quot;定休日&quot;,
+
+    &quot;address&quot;: &quot;住所&quot;,
+
+    &quot;fav&quot;: &quot;お気に入り&quot;,
+
+    &quot;save&quot;: &quot;お気に入りに追加&quot;,
+
+    &quot;saved&quot;: &quot;保存済み&quot;,
+
+    &quot;open_map&quot;: &quot;地図で開く&quot;,
+
+    &quot;share&quot;: &quot;シェア&quot;,
+
+    &quot;auto_translated&quot;: &quot;※PR文は日本語情報を自動翻訳で表示しています&quot;
+
+  }
+
+}
+
+
+
+
+3.2 messages/en.json（英語）
+
+{
+
+  &quot;app&quot;: {
+
+    &quot;name&quot;: &quot;TabiSpo&quot;,
+
+    &quot;tagline&quot;: &quot;Japan Travel Map&quot;,
+
+    &quot;slogan&quot;: &quot;Discover local gems on your journey&quot;
+
+  },
+
+  &quot;nav&quot;: {
+
+    &quot;login&quot;: &quot;Sign in&quot;,
+
+    &quot;favorites&quot;: &quot;Favorites&quot;,
+
+    &quot;apply&quot;: &quot;List Your Spot&quot;
+
+  },
+
+  &quot;categories&quot;: {
+
+    &quot;all&quot;: &quot;All&quot;, &quot;sight&quot;: &quot;Sightseeing&quot;, &quot;food&quot;: &quot;Dining&quot;,
+
+    &quot;sweet&quot;: &quot;Sweets&quot;, &quot;exp&quot;: &quot;Experience&quot;,
+
+    &quot;souvenir&quot;: &quot;Souvenir&quot;, &quot;sake&quot;: &quot;Brewery&quot;, &quot;onsen&quot;: &quot;Onsen &amp; Inn&quot;
+
+  },
+
+  &quot;spot&quot;: {
+
+    &quot;hours&quot;: &quot;Hours&quot;,
+
+    &quot;closed&quot;: &quot;Closed on&quot;,
+
+    &quot;address&quot;: &quot;Address&quot;,
+
+    &quot;save&quot;: &quot;Save&quot;,
+
+    &quot;saved&quot;: &quot;Saved&quot;,
+
+    &quot;open_map&quot;: &quot;Open Map&quot;,
+
+    &quot;share&quot;: &quot;Share&quot;,
+
+    &quot;auto_translated&quot;: &quot;*Description auto-translated from Japanese&quot;
+
+  }
+
+}
+
+
+
+
+
+
+4. DeepL API 自動翻訳
+
+
+
+
+4.1 翻訳対象フィールド
+フィールド
+翻訳方法
+タイミング
+対象プラン
+spots.pr_ja（元文）
+翻訳元
+店舗が入力
+全プラン
+spots.pr_en
+DeepL: ja→en
+掲載承認時（自動）
+スタンダード以上
+spots.pr_zh_cn
+DeepL: ja→zh
+掲載承認時（自動）
+スタンダード以上
+spots.pr_zh_tw
+DeepL: ja→zh-TW
+掲載承認時（自動）
+スタンダード以上
+spots.pr_ko
+DeepL: ja→ko
+掲載承認時（自動）
+スタンダード以上
+spots.seo_title
+手動（店舗が入力）
+任意
+スタンダード以上
+spots.meta_description
+手動 or DeepL
+任意
+スタンダード以上
+
+
+
+
+4.2 DeepL API 実装
+
+// src/lib/deepl.ts
+
+import * as deepl from &apos;deepl-node&apos;
+
+
+
+const translator = new deepl.Translator(process.env.DEEPL_API_KEY!)
+
+
+
+export async function translateSpotPR(japaneseText: string) {
+
+  const targets: deepl.TargetLanguageCode[] = [&apos;en-US&apos;, &apos;zh&apos;, &apos;zh-TW&apos; as any, &apos;ko&apos;]
+
+  const keys = [&apos;pr_en&apos;, &apos;pr_zh_cn&apos;, &apos;pr_zh_tw&apos;, &apos;pr_ko&apos;]
+
+
+
+  const results = await Promise.all(
+
+    targets.map(lang =&gt;
+
+      translator.translateText(japaneseText, &apos;ja&apos;, lang)
+
+    )
+
+  )
+
+
+
+  return Object.fromEntries(
+
+    keys.map((key, i) =&gt; [key, results[i].text])
+
+  )
+
+}
+
+
+
+// Webhook (承認時) で呼び出す
+
+const translations = await translateSpotPR(spot.pr)
+
+await supabase.from(&quot;spots&quot;).update(translations).eq(&quot;id&quot;, spotId)
+
+
+
+
+4.3 DeepL コスト
+プラン
+月間無料枠
+料金（超過時）
+たびスポでの想定
+DeepL Free
+500,000文字/月
+¥0（無料枠のみ）
+〜500スポット（PR文200字換算）
+DeepL Pro
+無制限
+€5.49/月〜（約¥900）
+500スポット超から
+
+
+
+PR文200文字 × 4言語翻訳 = 800文字/スポット。無料枠500,000文字 ÷ 800 = 625スポット分。立ち上げ〜中規模まで完全無料。
+
+
+
+
+
+
+5. データベース変更（v2.1）
+
+
+
+
+5.1 spots テーブルへの追加カラム
+カラム名
+型
+説明
+pr_en
+text
+PR文 英語（DeepL自動翻訳）
+pr_zh_cn
+text
+PR文 中国語簡体字（DeepL自動翻訳）
+pr_zh_tw
+text
+PR文 中国語繁体字（DeepL自動翻訳）
+pr_ko
+text
+PR文 韓国語（DeepL自動翻訳）
+
+
+
+
+5.2 マイグレーション SQL
+
+-- supabase/migrations/004_i18n.sql
+
+ALTER TABLE spots
+
+  ADD COLUMN IF NOT EXISTS pr_en     text,
+
+  ADD COLUMN IF NOT EXISTS pr_zh_cn  text,
+
+  ADD COLUMN IF NOT EXISTS pr_zh_tw  text,
+
+  ADD COLUMN IF NOT EXISTS pr_ko     text;
+
+
+
+-- ロケール別PR文取得ビュー（任意）
+
+CREATE OR REPLACE VIEW spots_i18n AS
+
+SELECT *,
+
+  CASE WHEN pr_en IS NOT NULL THEN pr_en ELSE pr END AS pr_localized
+
+FROM spots;
+
+
+
+
+
+
+6. 多言語 SEO 仕様
+
+
+
+
+6.1 hreflang タグ実装
+
+// app/[locale]/spots/[id]/page.tsx の generateMetadata
+
+export async function generateMetadata({ params }) {
+
+  const { locale, id } = params
+
+  const spot = await getSpot(id)
+
+  const baseUrl = &apos;https://tabispo.app&apos;
+
+
+
+  return {
+
+    alternates: {
+
+      languages: {
+
+        &apos;ja&apos;:    `${baseUrl}/ja/spots/${id}`,
+
+        &apos;en&apos;:    `${baseUrl}/en/spots/${id}`,
+
+        &apos;zh-CN&apos;: `${baseUrl}/zh-CN/spots/${id}`,
+
+        &apos;zh-TW&apos;: `${baseUrl}/zh-TW/spots/${id}`,
+
+        &apos;ko&apos;:    `${baseUrl}/ko/spots/${id}`,
+
+        &apos;x-default&apos;: `${baseUrl}/spots/${id}`,  // 日本語をデフォルトに
+
+      }
+
+    },
+
+    title: locale === &quot;ja&quot; ? spot.seo_title || spot.name
+
+         : locale === &quot;en&quot; ? `${spot.name} | TabiSpo`
+
+         : `${spot.name} | たびスポ`,
+
+    description: locale === &quot;ja&quot; ? spot.meta_description || spot.pr
+
+               : locale === &quot;en&quot; ? spot.pr_en || spot.pr
+
+               : locale === &quot;zh-CN&quot; ? spot.pr_zh_cn || spot.pr
+
+               : locale === &quot;zh-TW&quot; ? spot.pr_zh_tw || spot.pr
+
+               : spot.pr_ko || spot.pr,
+
+  }
+
+}
+
+
+
+
+6.2 言語別サイトマップ
+サイトマップURL
+対象言語
+更新頻度
+/sitemap-ja.xml
+日本語（全スポット）
+週次
+/sitemap-en.xml
+英語（全スポット）
+週次
+/sitemap-zh-CN.xml
+中国語簡体
+週次
+/sitemap-zh-TW.xml
+中国語繁体
+週次
+/sitemap-ko.xml
+韓国語
+週次
+/sitemap.xml
+全言語インデックス
+週次
+
+
+
+
+
+
+7. UI実装仕様
+
+
+
+
+7.1 言語ピッカー コンポーネント
+要素
+仕様
+配置
+全ページのヘッダー右端（AppBar内）
+表示形式
+国旗絵文字 + 言語名略称（例: 🇺🇸 EN）
+ドロップダウン
+タップで展開 / 言語リスト（国旗・言語名・チェックマーク）
+状態保持
+next-intl のクッキー（NEXT_LOCALE）に保存
+自動検出
+初回アクセス時にAccept-Languageから自動判定
+
+
+
+
+7.2 自動翻訳通知バナー
+条件
+表示内容
+スタイル
+locale!==&quot;ja&quot; かつ PR文あり
+「※PR文は日本語情報を自動翻訳で表示しています」
+黄色背景（#fff8e1）/ 🌐アイコン付き
+申込フォーム（locale!==&quot;ja&quot;）
+「〇〇語で申し込めます。担当者が確認します」
+青背景（#e3f2fd）/ 🌐アイコン付き
+
+
+
+
+7.3 多言語対応する画面
+画面ID
+対応内容
+P-01 地図トップ
+ヘッダー・カテゴリ名・スポット一覧ラベルを翻訳
+P-02 スポット詳細
+PR文（翻訳済み）・ラベル・SNSリンク・自動翻訳通知
+P-03 掲載申込
+フォームラベル・エラーメッセージ・確認メールを翻訳
+P-04/05 ログイン/登録
+全UIテキストを翻訳
+P-06 お気に入り
+ラベル・空状態メッセージを翻訳
+S-01〜S-05 店舗管理
+日本語のみ（店舗オーナーは日本語対応を前提）
+A-01〜A-03 管理者
+日本語のみ
+
+
+
+
+
+
+8. 新規環境変数
+
+
+変数名
+取得元
+用途
+DEEPL_API_KEY
+DeepL Developer Console
+DeepL API認証キー
+NEXT_PUBLIC_DEFAULT_LOCALE
+環境設定（ja固定）
+next-intlのデフォルトロケール
+
+
+
+
+
+— 以上（多言語対応仕様書 v2.1）—

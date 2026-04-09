@@ -2,6 +2,7 @@
 
 import { useRef, useEffect, useState } from 'react'
 import type { Spot } from '@/types/spot'
+import { useMissions } from '@/lib/useMissions'
 
 const CAT_COLOR: Record<string, string> = {
   '観光':    '#8b5e3c',
@@ -20,12 +21,16 @@ interface BottomSheetProps {
 
 export default function BottomSheet({ spot, onClose }: BottomSheetProps) {
   const sheetRef = useRef<HTMLDivElement>(null)
+  const { addProgress } = useMissions()
   // スライドアニメーションのため「最後に表示したスポット」を保持
   const [displaySpot, setDisplaySpot] = useState<Spot | null>(null)
 
   useEffect(() => {
-    if (spot) setDisplaySpot(spot)
-  }, [spot])
+    if (spot) {
+      setDisplaySpot(spot)
+      addProgress('spot_master')
+    }
+  }, [spot, addProgress])
 
   const open = !!spot
   const s = displaySpot

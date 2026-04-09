@@ -67,7 +67,7 @@ export async function POST(request: Request) {
           <table width="100%" cellpadding="0" cellspacing="0"><tr>
             <td style="padding:24px 28px">
               <p style="margin:0;font-size:20px">⛩️</p>
-              <p style="margin:6px 0 0;font-size:18px;font-weight:700;color:#c4a870;letter-spacing:0.04em">こんぴらタウンMAP</p>
+              <p style="margin:6px 0 0;font-size:18px;font-weight:700;color:#c4a870;letter-spacing:0.04em">旅スポ</p>
               <p style="margin:4px 0 0;font-size:12px;color:rgba(196,168,112,0.7)">掲載申込 受付完了のお知らせ</p>
             </td>
           </tr></table>
@@ -77,7 +77,7 @@ export async function POST(request: Request) {
         <tr><td style="padding:28px 28px 8px">
           <p style="margin:0 0 12px;font-size:15px;color:#374151">${contactName} 様</p>
           <p style="margin:0 0 20px;font-size:14px;color:#6b7280;line-height:1.7">
-            この度は「こんぴらタウンMAP」への掲載をお申し込みいただき、誠にありがとうございます。<br>
+            この度は「旅スポ」への掲載をお申し込みいただき、誠にありがとうございます。<br>
             下記の内容で申込を受け付けました。担当者よりご連絡いたします。
           </p>
 
@@ -108,7 +108,7 @@ export async function POST(request: Request) {
         <!-- フッター -->
         <tr><td style="padding:16px 28px 24px;border-top:1px solid #f0e8d8">
           <p style="margin:0;font-size:12px;color:#9ca3af">
-            こんぴらタウンMAP 運営事務局<br>
+            旅スポ 運営事務局<br>
             <a href="${appUrl}" style="color:#8b5e3c">${appUrl}</a>
           </p>
         </td></tr>
@@ -132,7 +132,7 @@ export async function POST(request: Request) {
           <div style="height:4px;background:linear-gradient(90deg,#7a4e20,#e8c860,#c4a240,#e8c860,#7a4e20)"></div>
           <table width="100%" cellpadding="0" cellspacing="0"><tr>
             <td style="padding:20px 28px">
-              <p style="margin:0;font-size:16px;font-weight:700;color:#c4a870">【新規申込通知】こんぴらタウンMAP</p>
+              <p style="margin:0;font-size:16px;font-weight:700;color:#c4a870">【新規申込通知】旅スポ</p>
             </td>
           </tr></table>
         </td></tr>
@@ -167,13 +167,13 @@ export async function POST(request: Request) {
   try {
     await Promise.all([
       resend.emails.send({
-        from:    'こんぴらタウンMAP <onboarding@resend.dev>',
+        from:    '旅スポ <onboarding@resend.dev>',
         to:      email,
-        subject: '【こんぴらタウンMAP】掲載申込を受け付けました',
+        subject: '【旅スポ】掲載申込を受け付けました',
         html:    applicantHtml,
       }),
       resend.emails.send({
-        from:    'こんぴらタウンMAP <onboarding@resend.dev>',
+        from:    '旅スポ <onboarding@resend.dev>',
         to:      adminEmail,
         subject: `【新規申込】${shopName}（${planLabel}）`,
         html:    adminHtml,

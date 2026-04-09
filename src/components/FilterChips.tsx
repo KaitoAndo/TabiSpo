@@ -1,6 +1,7 @@
 'use client'
 
 import { CATEGORIES } from '@/lib/constants'
+import { motion } from 'framer-motion'
 
 interface FilterChipsProps {
   activeCat: string
@@ -9,32 +10,32 @@ interface FilterChipsProps {
 
 export default function FilterChips({ activeCat, onChange }: FilterChipsProps) {
   return (
-    <div
-      className="flex gap-2 px-3 py-2 overflow-x-auto"
-      style={{
-        background: 'linear-gradient(135deg, rgba(28,16,6,0.95) 0%, rgba(60,34,12,0.90) 100%)',
-        scrollbarWidth: 'none',
-        WebkitOverflowScrolling: 'touch',
-      }}
-    >
-      {CATEGORIES.map(cat => {
-        const active = activeCat === cat
-        return (
-          <button
-            key={cat}
-            onClick={() => onChange(cat)}
-            className="shrink-0 px-3 py-1 rounded-full text-xs font-medium transition-all duration-150 whitespace-nowrap select-none"
-            style={{
-              background:  active ? '#8b5e3c' : 'transparent',
-              color:       active ? '#fff'     : '#c4a870',
-              border:      `1px solid ${active ? '#8b5e3c' : 'rgba(196,168,112,0.3)'}`,
-              boxShadow:   active ? '0 1px 6px rgba(139,94,60,0.5)' : 'none',
-            }}
-          >
-            {cat}
-          </button>
-        )
-      })}
+    <div className="flex justify-center w-full px-2">
+      <div
+        className="flex gap-2 px-2 py-2 overflow-x-auto hide-scrollbar bg-white/90 backdrop-blur-md border border-stone-200/50 shadow-[0_8px_32px_rgba(0,0,0,0.06)] rounded-full max-w-full"
+      >
+        {CATEGORIES.map(cat => {
+          const active = activeCat === cat
+          return (
+            <button
+              key={cat}
+              onClick={() => onChange(cat)}
+              className={`relative shrink-0 px-4 py-1.5 rounded-full text-xs font-bold transition-colors whitespace-nowrap select-none overflow-hidden ${
+                active ? 'text-amber-800' : 'text-stone-500 hover:text-stone-700 hover:bg-stone-100/50'
+              }`}
+            >
+              {active && (
+                <motion.div 
+                  layoutId="filter-chip-active"
+                  className="absolute inset-0 bg-amber-200/60 mix-blend-multiply rounded-full z-0 border border-amber-300/50"
+                  transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
+                />
+              )}
+              <span className="relative z-10">{cat}</span>
+            </button>
+          )
+        })}
+      </div>
     </div>
   )
 }

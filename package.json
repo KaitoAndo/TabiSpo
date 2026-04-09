@@ -1,5 +1,5 @@
 {
-  "name": "kotohira-map",
+  "name": "tabispo",
   "version": "0.1.0",
   "private": true,
   "scripts": {
@@ -12,6 +12,7 @@
     "@stripe/stripe-js": "^9.0.1",
     "@supabase/ssr": "^0.10.0",
     "@supabase/supabase-js": "^2.101.1",
+    "framer-motion": "^12.38.0",
     "maplibre-gl": "^5.22.0",
     "next": "16.2.2",
     "react": "19.2.4",

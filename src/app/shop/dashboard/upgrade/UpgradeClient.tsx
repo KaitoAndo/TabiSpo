@@ -7,8 +7,8 @@ const PLANS = [
   {
     key: 'free',
     name: '無料掲載',
-    price: 0,
-    priceId: null,
+    prices: { monthly: 0, annual: 0 },
+    priceIds: { monthly: null, annual: null },
     badge: undefined as string | undefined,
     color: '#6b7280',
     bg: '#f3f4f6',
@@ -27,8 +27,11 @@ const PLANS = [
   {
     key: 'standard',
     name: 'スタンダード',
-    price: 3000,
-    priceId: process.env.NEXT_PUBLIC_STRIPE_PRICE_STANDARD,
+    prices: { monthly: 3000, annual: 30000 },
+    priceIds: {
+      monthly: process.env.NEXT_PUBLIC_STRIPE_PRICE_STD_MONTHLY,
+      annual: process.env.NEXT_PUBLIC_STRIPE_PRICE_STD_ANNUAL,
+    },
     badge: undefined as string | undefined,
     color: '#1d4ed8',
     bg: '#dbeafe',
@@ -45,8 +48,11 @@ const PLANS = [
   {
     key: 'premium',
     name: 'プレミアム',
-    price: 10000,
-    priceId: process.env.NEXT_PUBLIC_STRIPE_PRICE_PREMIUM,
+    prices: { monthly: 10000, annual: 99600 },
+    priceIds: {
+      monthly: process.env.NEXT_PUBLIC_STRIPE_PRICE_PRE_MONTHLY,
+      annual: process.env.NEXT_PUBLIC_STRIPE_PRICE_PRE_ANNUAL,
+    },
     color: '#92400e',
     bg: '#fef3c7',
     badge: 'おすすめ',
@@ -66,12 +72,13 @@ interface Props {
 
 export default function UpgradeClient({ currentPlan }: Props) {
   const router = useRouter()
+  const [billing, setBilling] = useState<'monthly' | 'annual'>('monthly')
   const [loading, setLoading] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
 
   async function handleUpgrade(planKey: string, priceId: string | undefined) {
     if (!priceId) {
-      setError('この機能は現在準備中です。')
+      setError('このプランの決済準備ができていません。')
       return
     }
     setLoading(planKey)
@@ -81,7 +88,7 @@ export default function UpgradeClient({ currentPlan }: Props) {
       const res = await fetch('/api/stripe/checkout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ priceId, plan: planKey }),
+        body: JSON.stringify({ priceId, plan: planKey, billing }),
       })
       const data = await res.json()
 
@@ -105,6 +112,40 @@ export default function UpgradeClient({ currentPlan }: Props) {
       {error && (
         <div className="px-4 py-3 rounded-xl text-sm" style={{ background: '#fef2f2', color: '#dc2626' }}>
           {error}
+        </div>
+      )}
+
+      {/* 月払い/年払いトグル */}
+      <div className="flex justify-center mt-4 mb-2">
+        <div className="inline-flex bg-white rounded-full p-1 shadow-sm border border-[#e8c860]/30">
+          <button
+            onClick={() => setBilling('monthly')}
+            className={`px-6 py-2 rounded-full text-sm font-bold transition-colors ${
+              billing === 'monthly' ? 'bg-[#c4a870] text-[#1c1006]' : 'text-[#6b7280] hover:text-[#1c1006]'
+            }`}
+          >
+            月払い
+          </button>
+          <button
+            onClick={() => setBilling('annual')}
+            className={`px-6 py-2 rounded-full text-sm font-bold transition-colors relative ${
+              billing === 'annual' ? 'bg-[#c4a870] text-[#1c1006]' : 'text-[#6b7280] hover:text-[#1c1006]'
+            }`}
+          >
+            年払い
+            <span className="absolute -top-3 -right-3 bg-yellow-400 text-yellow-900 text-[10px] px-2 py-0.5 rounded-full shadow-sm font-bold">
+              17%OFF
+            </span>
+          </button>
+        </div>
+      </div>
+      
+      {billing === 'annual' && (
+        <div className="text-center mb-6">
+          <span className="inline-block px-4 py-1.5 rounded-full text-sm font-bold"
+            style={{ background: '#f0fdf4', color: '#166534' }}>
+            スタンダードで年間¥6,000節約
+          </span>
         </div>
       )}
 
@@ -140,9 +181,12 @@ export default function UpgradeClient({ currentPlan }: Props) {
                   )}
                 </div>
                 <p className="text-2xl font-bold mt-2" style={{ color: '#1c1006' }}>
-                  {plan.price === 0 ? '無料' : `¥${plan.price.toLocaleString()}`}
-                  {plan.price > 0 && <span className="text-sm font-normal" style={{ color: '#6b7280' }}> /月</span>}
+                  {plan.prices[billing] === 0 ? '無料' : `¥${(billing === 'annual' ? plan.prices.annual / 12 : plan.prices.monthly).toLocaleString()}`}
+                  {plan.prices[billing] > 0 && <span className="text-sm font-normal" style={{ color: '#6b7280' }}> /月</span>}
                 </p>
+                {billing === 'annual' && plan.prices.annual > 0 && (
+                  <p className="text-xs mt-1 font-medium" style={{ color: '#9ca3af' }}>年額 ¥{plan.prices.annual.toLocaleString()}</p>
+                )}
               </div>
 
               {/* 機能一覧 */}
@@ -175,11 +219,14 @@ export default function UpgradeClient({ currentPlan }: Props) {
                   </div>
                 ) : (
                   <button
-                    onClick={() => handleUpgrade(plan.key, plan.priceId ?? undefined)}
+                    onClick={() => handleUpgrade(plan.key, plan.priceIds[billing] ?? undefined)}
                     disabled={isDisabled}
                     className="w-full py-2 rounded-xl text-sm font-bold transition-opacity disabled:opacity-50"
                     style={{ background: '#c4a870', color: '#1c1006' }}>
-                    {loading === plan.key ? '処理中…' : `${plan.name}にアップグレード`}
+                    {loading === plan.key ? '処理中…' : 
+                      (plan.prices[billing] > 0 ? 
+                        (billing === 'annual' ? `年払いで申し込む（¥${plan.prices.annual.toLocaleString()}/年）` : `月払いで申し込む（¥${plan.prices.monthly.toLocaleString()}/月）`) 
+                        : '申し込む')}
                   </button>
                 )}
               </div>

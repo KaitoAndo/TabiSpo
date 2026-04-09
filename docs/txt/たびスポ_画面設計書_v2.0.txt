@@ -1,0 +1,202 @@
+画面設計書
+
+たびスポ 全国版
+
+Version 2.0 — 2026年4月改訂
+
+総画面数
+
+17画面
+
+X-01追加
+
+改訂画面
+
+3画面
+
+P-02/S-04/S-05
+
+新規画面
+
+2画面
+
+S-05/X-01
+
+
+
+【v2.0 更新内容】① 月払い・年払いの料金体系追加（スタンダード¥2,500/月〜年払い）　② 店舗SNS設定8種（Instagram/X/TikTok/Facebook/YouTube/LINE/公式サイト/Google ビジネス）　③ 店舗SEO設定（タイトル/メタ説明/ハッシュタグ/Googleプレビュー）　④ SEO戦略4層（技術・コンテンツ・SNS連携・計測）　⑤ 画面追加（S-05 SNS/SEO設定、X-01 SEO戦略）
+
+
+
+
+1. v2.0 変更・追加画面
+
+
+画面ID
+変更種別
+変更内容
+P-02
+機能追加
+SNSリンクセクション・ハッシュタグ表示を追加
+S-02
+機能追加
+ダッシュボードにGoogle検索プレビューボックスを追加
+S-04
+大幅改修
+月払い/年払いトグル・節約額バナー・年額CTAボタンを追加
+S-05
+新規追加
+3タブ構成（SNS・外部リンク / SEO設定 / アカウント）
+X-01
+新規追加
+SEO戦略設計資料（4層: 技術・コンテンツ・SNS連携・計測）
+
+
+
+
+
+
+P-02 スポット詳細 v2.0 追加仕様
+追加要素
+種類
+表示条件
+動作
+SNS・外部リンクセクション
+アイコン付きリンクボタン群
+各SNS URLが設定されている場合のみ表示
+タップで target=_blank 外部遷移
+ハッシュタグ
+インラインバッジ（半透明）
+hashtagsが1件以上設定
+表示のみ（タップでコピー、将来対応）
+Twitter Card / OGP
+メタタグ（非表示）
+常時
+SNSシェア時に最適化されたプレビュー表示
+JSON-LD（構造化データ）
+scriptタグ（非表示）
+常時
+LocalBusiness / TouristAttraction スキーマ
+
+
+
+
+S-04 プランアップグレード v2.0 完全仕様
+UI要素
+仕様
+動作
+月払い/年払いトグル
+2択ボタングループ / billing state で切替
+選択でプランカードの金額・CTAを即時更新
+17%OFFバッジ
+年払いボタン内に黄色バッジ
+billing=annualのとき常時表示
+節約額バナー（緑）
+「スタンダードで年間¥6,000節約」
+billing=annualのときのみ表示
+プランカード金額
+月払い: ¥3,000/月 / 年払い: ¥2,500/月（年¥30,000）
+billingに応じて動的レンダリング
+CTAボタンテキスト
+月払い: 「月払いで申し込む（¥3,000/月）」
+年払い: 「年払いで申し込む（¥30,000/年）」
+billingに応じて切替
+Checkout POST
+/api/stripe/checkout へ { plan, billing } をPOST
+Stripe Checkout Session生成→リダイレクト
+
+
+
+
+S-05 SNS・SEO設定 v2.0 新規仕様
+
+
+
+タブ 1: SNS・外部リンク
+SNS種別
+フィールド名
+プレースホルダー
+アイコン
+Instagram
+instagram_url
+https://instagram.com/yourshop
+📸
+X（旧Twitter）
+twitter_url
+https://x.com/yourshop
+𝕏
+TikTok
+tiktok_url
+https://tiktok.com/@yourshop
+▶
+Facebook
+facebook_url
+https://facebook.com/yourpage
+📘
+YouTube
+youtube_url
+https://youtube.com/@yourchannel
+📺
+LINE公式アカウント
+line_url
+https://line.me/R/ti/p/@xxxx
+💬
+公式ウェブサイト
+website_url
+https://yourshop.com
+🌐
+Google ビジネスプロフィール
+google_business_url
+https://maps.google.com/...
+🗺
+
+
+
+
+
+タブ 2: SEO設定
+UI要素
+制限
+動作
+SEOタイトル入力
+60文字以内 / 残字数カウンター
+spots.seo_title に保存
+メタディスクリプション
+160文字以内 / 残字数カウンター
+spots.meta_description に保存
+ハッシュタグ入力
+#から始まる / 最大10個
+spots.hashtags 配列に追加
+Googleプレビューボックス
+読み取り専用
+入力値をリアルタイムに反映してプレビュー表示
+
+
+
+Googleプレビュー仕様: タイトルは青色(#1a73e8) / URLは緑色(#006621) / 説明文は灰色(#545454)。実際のGoogleと同じ配色でレンダリング。
+
+
+
+
+X-01 SEO戦略（設計資料）
+SEO層
+施策
+実装ファイル
+技術的SEO
+generateMetadata / JSON-LD / sitemap.ts / robots.ts / next/image
+app/spots/[id]/page.tsx, app/sitemap.ts, app/robots.ts
+コンテンツSEO
+地域×カテゴリLP自動生成 / ハッシュタグをOGPに反映
+app/area/[pref]/[cat]/page.tsx
+SNS連携SEO
+SNSリンクをsameAsに含めJSON-LD出力 / OGP最適化
+app/spots/[id]/page.tsx
+計測・改善
+Vercel Analytics / Search Console連携 / 閲覧数モニタリング
+—
+
+
+
+
+
+— 以上（画面設計書 v2.0）—

@@ -11,7 +11,7 @@ export async function POST(request: NextRequest) {
   }
 
   const body = await request.json()
-  const { priceId, plan } = body as { priceId: string; plan: string }
+  const { priceId, plan, billing = 'monthly' } = body as { priceId: string; plan: string; billing: string }
 
   if (!priceId || !plan) {
     return Response.json({ error: 'priceId and plan are required' }, { status: 400 })
@@ -42,17 +42,22 @@ export async function POST(request: NextRequest) {
 
   const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000'
 
-  const session = await stripe.checkout.sessions.create({
-    mode: 'subscription',
-    customer: customerId,
-    line_items: [{ price: priceId, quantity: 1 }],
-    success_url: `${appUrl}/shop/dashboard?success=true`,
-    cancel_url: `${appUrl}/shop/dashboard/upgrade?canceled=true`,
-    metadata: { shop_id: user.id, plan },
-    subscription_data: {
-      metadata: { shop_id: user.id, plan },
-    },
-  })
-
-  return Response.json({ url: session.url })
+  try {
+    const session = await stripe.checkout.sessions.create({
+      mode: 'subscription',
+      customer: customerId,
+      line_items: [{ price: priceId, quantity: 1 }],
+      success_url: `${appUrl}/shop/dashboard?success=true`,
+      cancel_url: `${appUrl}/shop/dashboard/upgrade?canceled=true`,
+      metadata: { shop_id: user.id, plan, billing },
+      subscription_data: {
+        metadata: { shop_id: user.id, plan, billing },
+      },
+    })
+    
+    return Response.json({ url: session.url })
+  } catch (error: any) {
+    console.error('Stripe Checkout Error:', error)
+    return Response.json({ error: error.message || 'Stripe error' }, { status: 500 })
+  }
 }

@@ -1,5 +1,5 @@
 -- ============================================================
--- こんぴらタウンMAP — 初期マイグレーション
+-- 旅スポ — 初期マイグレーション
 -- Supabase SQL Editor で実行してください
 -- ============================================================
 
@@ -51,11 +51,13 @@ alter table public.shops enable row level security;
 -- ============================================================
 
 -- 全員がアクティブなスポットを参照可
+drop policy if exists "spots_select_public" on public.spots;
 create policy "spots_select_public"
   on public.spots for select
   using (is_active = true);
 
 -- 自分の shop に紐づく spot のみ更新可
+drop policy if exists "spots_update_owner" on public.spots;
 create policy "spots_update_owner"
   on public.spots for update
   using (
@@ -67,6 +69,7 @@ create policy "spots_update_owner"
   );
 
 -- 自分の shop に紐づく spot のみ削除可
+drop policy if exists "spots_delete_owner" on public.spots;
 create policy "spots_delete_owner"
   on public.spots for delete
   using (
@@ -78,6 +81,7 @@ create policy "spots_delete_owner"
   );
 
 -- 認証済みユーザーのみ INSERT 可（管理者が登録）
+drop policy if exists "spots_insert_authenticated" on public.spots;
 create policy "spots_insert_authenticated"
   on public.spots for insert
   with check (auth.role() = 'authenticated');
@@ -87,11 +91,13 @@ create policy "spots_insert_authenticated"
 -- ============================================================
 
 -- 自分のレコードのみ参照可
+drop policy if exists "shops_select_self" on public.shops;
 create policy "shops_select_self"
   on public.shops for select
   using (auth.uid() = id);
 
 -- 自分のレコードのみ更新可
+drop policy if exists "shops_update_self" on public.shops;
 create policy "shops_update_self"
   on public.shops for update
   using (auth.uid() = id);

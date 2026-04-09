@@ -57,7 +57,7 @@ export function AuthLayout({ title, children }: { title: string; children: React
       <div className="w-full max-w-sm">
         <div className="text-center mb-8">
           <span className="text-5xl">⛩️</span>
-          <h1 className="mt-3 text-xl font-bold" style={{ color:'#c4a870' }}>こんぴらタウンMAP</h1>
+          <h1 className="mt-3 text-xl font-bold" style={{ color:'#c4a870' }}>旅スポ</h1>
           <p className="text-sm mt-1" style={{ color:'rgba(196,168,112,0.6)' }}>{title}</p>
         </div>
         <div className="bg-white rounded-2xl shadow-2xl p-6 space-y-4">{children}</div>

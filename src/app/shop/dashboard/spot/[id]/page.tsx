@@ -6,6 +6,11 @@ import Image from 'next/image'
 import { createClient } from '@/lib/supabase/client'
 import { CATEGORIES, AREAS } from '@/lib/constants'
 import type { Spot, SpotCategory } from '@/types/spot'
+import dynamic from 'next/dynamic'
+import { parseGoogleMapUrl } from './actions'
+
+// MapPickerはSSRを無効化
+const MapPicker = dynamic(() => import('@/components/MapPicker'), { ssr: false })
 
 const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp']
 const MAX_SIZE_MB   = 2
@@ -45,6 +50,8 @@ export default function SpotEditPage() {
   const [preview,  setPreview]  = useState<string | null>(null)
   const [toast,    setToast]    = useState<{ msg: string; type: ToastType } | null>(null)
   const [imgError, setImgError] = useState('')
+  const [mapUrl,   setMapUrl]   = useState('')
+  const [parsingMap, setParsingMap] = useState(false)
   const fileRef = useRef<HTMLInputElement>(null)
 
   // ── 初期データ取得 ──────────────────────────────────────
@@ -108,8 +115,28 @@ export default function SpotEditPage() {
     if (!form.name?.trim())           return '店舗名は必須です'
     if (form.name.length > MAX_NAME_LEN) return `店舗名は${MAX_NAME_LEN}文字以内にしてください`
     if (!form.hours?.trim())          return '営業時間は必須です'
+    if (!form.lat || !form.lng)       return 'Google Maps URLから位置情報を取得してください'
     if ((form.pr?.length ?? 0) > MAX_PR_LEN) return `PR文は${MAX_PR_LEN}文字以内にしてください`
     return null
+  }
+
+  // ── URL解析 ──────────────────────────────────────────────
+  async function handleMapUrlParse() {
+    if (!mapUrl) return
+    setParsingMap(true)
+    try {
+      const res = await parseGoogleMapUrl(mapUrl)
+      if (res.error) {
+        setToast({ msg: res.error, type: 'error' })
+        return
+      }
+      setForm(prev => ({ ...prev, lat: res.lat, lng: res.lng }))
+      setToast({ msg: '位置情報を取得しました！', type: 'success' })
+    } catch (err: any) {
+      setToast({ msg: 'エラーが発生しました', type: 'error' })
+    } finally {
+      setParsingMap(false)
+    }
   }
 
   // ── 保存 ────────────────────────────────────────────────
@@ -135,7 +162,9 @@ export default function SpotEditPage() {
           area:      form.area      || null,
           tag:       form.tag       || null,
           image_url: image_url      || null,
-          is_active: form.is_active ?? true,
+          lat:       form.lat,
+          lng:       form.lng,
+          is_active: false, // 修正・登録時は必ず運営の承認待ち(非公開)に戻る仕様とする場合、これを設定
         })
         .eq('id', id)
 
@@ -303,6 +332,60 @@ export default function SpotEditPage() {
           </div>
         </div>
 
+        {/* ── 位置情報 ── */}
+        <div className="bg-white rounded-2xl shadow-sm overflow-hidden border border-stone-100">
+          <SectionTitle>位置情報 *</SectionTitle>
+          <div className="p-4 space-y-4">
+            <div className="space-y-2">
+              <label className="block text-xs font-medium text-stone-600">マップから直接指定</label>
+              {!loading && (
+                <MapPicker
+                  initialLat={form.lat}
+                  initialLng={form.lng}
+                  onChange={(lat, lng) => setForm(prev => ({ ...prev, lat, lng }))}
+                />
+              )}
+            </div>
+
+            <div className="relative flex py-2 items-center">
+              <div className="flex-grow border-t border-stone-200"></div>
+              <span className="flex-shrink-0 mx-4 text-stone-400 text-[10px]">または</span>
+              <div className="flex-grow border-t border-stone-200"></div>
+            </div>
+
+            <div className="space-y-2">
+              <label className="block text-xs font-medium text-stone-600">Google Map URL から抽出</label>
+              <div className="flex gap-2">
+                <input
+                  type="url"
+                  value={mapUrl}
+                  onChange={e => setMapUrl(e.target.value)}
+                  placeholder="https://goo.gl/maps/..."
+                  className="flex-1 px-3 py-2 text-sm border border-stone-200 rounded-xl focus:ring-2 focus:outline-none"
+                />
+                <button
+                  type="button"
+                  onClick={handleMapUrlParse}
+                  disabled={parsingMap || !mapUrl}
+                  className="px-4 py-2 bg-blue-50 text-blue-600 font-bold text-xs rounded-xl hover:bg-blue-100 disabled:opacity-50 transition-colors whitespace-nowrap"
+                >
+                  {parsingMap ? '解析中...' : '抽出する'}
+                </button>
+              </div>
+            </div>
+
+            {form.lat && form.lng && (
+              <div className="bg-green-50 p-3 rounded-lg border border-green-100 flex items-start gap-2">
+                <span className="text-green-600">✅</span>
+                <div>
+                  <p className="text-xs font-bold text-green-800">位置情報セット済み</p>
+                  <p className="text-[10px] text-green-600">Lat: {form.lat.toFixed(6)}, Lng: {form.lng.toFixed(6)}</p>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+
         {/* ── 営業情報 ── */}
         <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
           <SectionTitle>営業情報</SectionTitle>
@@ -348,20 +431,12 @@ export default function SpotEditPage() {
               />
             </Field>
 
-            <Field label="公開設定">
-              <label className="flex items-center gap-2 cursor-pointer py-1">
-                <input
-                  type="checkbox"
-                  checked={form.is_active ?? true}
-                  onChange={e => set('is_active', e.target.checked)}
-                  className="w-4 h-4"
-                  style={{ accentColor: '#8b5e3c' }}
-                />
-                <span className="text-sm" style={{ color: '#374151' }}>
-                  マップに公開する
-                </span>
-              </label>
-            </Field>
+            <div className="pt-2">
+              <p className="text-xs text-stone-500 bg-stone-50 p-2 rounded-lg border border-stone-100">
+                ℹ️ 保存するとシステム側での<strong>審査・承認待ち（非公開状態）</strong>になります。<br/>
+                運営による確認後、マップ上に公開されます。
+              </p>
+            </div>
           </div>
         </div>
 
